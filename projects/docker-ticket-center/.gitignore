@@ -1,0 +1,25 @@
+laravel/node_modules
+laravel/public/hot
+laravel/public/storage
+laravel/storage/*.key
+laravel/vendor
+laravel/.env
+laravel/.env.backup
+laravel/.phpunit.result.cache
+laravel/Homestead.json
+laravel/Homestead.yaml
+laravel/npm-debug.log
+laravel/yarn-error.log
+/.idea
+/.vscode
+.env
+###> Docker ###
+nginx/sites/default.conf
+###< Docker ###
+.idea
+logs/*.*
+!logs/.gitkeep
+
+etc/mongo/
+!etc/mongo/.gitkeep
+

@@ -1,0 +1,86 @@
+version: "3.7"
+services:
+  php-fpm:
+    container_name: ${APP_NAME}_php_fpm
+    build:
+      context: ./php-fpm
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: $PHP_VERSION
+        PLATFORM_ENVIRONMENT: $PLATFORM_ENVIRONMENT
+        PHP_MEMORY_LIMIT: $PHP_MEMORY_LIMIT
+        APP_NAME: $APP_NAME
+        LC_ALL: $LC_ALL
+        LANG: $LANG
+        TZ: $TZ
+        FPM_MAX_CHILDREN: $FPM_MAX_CHILDREN
+        FPM_START_SERVERS: $FPM_START_SERVERS
+        FPM_MIN_SPARE_SERVERS: $FPM_MIN_SPARE_SERVERS
+        FPM_MAX_SPARE_SERVERS: $FPM_MAX_SPARE_SERVERS
+    volumes:
+      - app:/var/www/${APP_NAME}
+
+    networks:
+      - elk_external
+      - internal
+  nginx:
+    container_name: ${APP_NAME}_nginx
+    build:
+      context: ./nginx
+      args:
+        SERVER_NAME: $SERVER_NAME
+        APP_NAME: $APP_NAME
+        APP_ENV: $APP_ENV
+        APP_SECRET: $APP_SECRET
+        LC_ALL: $LC_ALL
+        LANG: $LANG
+        TZ: $TZ
+    volumes:
+      - app:/var/www/${APP_NAME}
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/sites:/etc/nginx/sites-available
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./logs:/var/log/nginx
+    depends_on:
+      - php-fpm
+    networks:
+      - internal
+    ports:
+      - "${DOCKER_NGINX_PORT}:80"
+  mongo:
+    image: mongo:5-focal
+    container_name: ${APP_NAME}_mongo
+    ports:
+      - "27017:${DOCKER_MONGO_PORT}"
+    volumes:
+      - mongo_data:/data/db
+      - ./etc/init-mongo-js.sh:/docker-entrypoint-initdb.d/init-mongo-js.sh
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_INITDB_ROOT_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_INITDB_ROOT_PASSWORD
+      LC_ALL: $LC_ALL
+      LANG: $LANG
+      TZ: $TZ
+    networks:
+      - internal
+
+volumes:
+  app:
+    name: ${APP_NAME}_app
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: $PWD
+  mongo_data:
+    name: ${APP_NAME}_mongo_data
+    driver: local
+    driver_opts:
+      type: none
+      device: $PWD/etc/mongo
+      o: bind
+networks:
+  elk_external:
+    external:
+      name: elk_external
+  internal: ~
